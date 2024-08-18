@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <title>Weather App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f8ff;
+        }
+        #weather-container {
+            text-align: center;
+            padding: 30px;
+            background: #007acc;
+            border-radius: 10px;
+            color: white;
+            width: 350px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            padding: 15px;
+            margin: 15px 0;
+            width: 90%;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+        }
+        button {
+            background: #005f99;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #004080;
+        }
+        #result img {
+            width: 150px; 
+            margin: 20px 0;
+        }
+        #result p {
+            font-size: 1.2rem; 
+        }
+    </style>
+</head>
+<body>
+    <div id="weather-container">
+        <h2>Weather App</h2>
+        <input type="text" id="city" placeholder="Enter city name">
+        <button onclick="getWeather()">Get Weather</button>
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        async function getWeather() {
+            const city = document.getElementById('city').value;
+            if (!city) {
+                alert('Please enter a city name');
+                return;
+            }
+
+            try {
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${city}`;
+                const geoResponse = await fetch(geoUrl);
+                const geoData = await geoResponse.json();
+
+                if (geoData.results && geoData.results.length > 0) {
+                    const { latitude, longitude, name, country } = geoData.results[0];
+                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+                    const weatherResponse = await fetch(weatherUrl);
+                    const weatherData = await weatherResponse.json();
+
+                    const weatherCode = weatherData.current_weather.weathercode;
+                    let weatherIcon = '';
+                    let weatherStatus = '';
+                    if (weatherCode === 0) {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/c01d.png'; 
+                        weatherStatus = 'Clear sky';
+                    } else if (weatherCode === 1) {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/c02d.png';
+                        weatherStatus = 'Few clouds';
+                    } else if (weatherCode === 2) {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/c03d.png'; 
+                        weatherStatus = 'Scattered clouds';
+                    } else if (weatherCode === 3) {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/c04d.png'; 
+                        weatherStatus = 'Broken clouds';
+                    } else if (weatherCode >= 45 && weatherCode <= 49) {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/r01d.png'; 
+                        weatherStatus = 'Rainy';
+                    } else if (weatherCode >= 51 && weatherCode <= 53) {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/r02d.png';
+                        weatherStatus = 'Showers';
+                    } else {
+                        weatherIcon = 'https://www.weatherbit.io/static/img/icons/unknown.png'; 
+                        weatherStatus = 'Unknown';
+                    }
+
+                    
+                    document.getElementById('result').innerHTML = `
+                        <h3>${name}, ${country}</h3>
+                        <img src="${weatherIcon}" alt="Weather Icon">
+                        <p>${weatherStatus}</p>
+                        <p>Temperature: ${weatherData.current_weather.temperature}°C</p>
+                        <p>Wind Speed: ${weatherData.current_weather.windspeed} km/h</p>
+                    `;
+                } else {
+                    alert('City not found. Please try again.');
+                }
+            } catch (error) {
+                alert('Error fetching weather data');
+            }
+        }
+    </script>
+</body>
+</html>
